@@ -9,6 +9,11 @@ import coulomb.syntax.*
 import coulomb.units.constants.*
 import coulomb.units.si.*
 import edu.wpi.first.math.filter.SlewRateLimiter
+import edu.wpi.first.networktables.{
+  DoublePublisher,
+  NetworkTable,
+  NetworkTableInstance
+}
 import edu.wpi.first.wpilibj.drive.DifferentialDrive
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import org.daredevils2512.crescendo.robot.subsystems.drivetrain.capabilities.{
@@ -21,7 +26,8 @@ import org.daredevils2512.crescendo.robot.subsystems.drivetrain.capabilities.{
 import scala.language.implicitConversions
 import scala.math.Numeric.*
 
-class Drivetrain(config: Config) extends SubsystemBase:
+class Drivetrain(config: Config, networkTable: NetworkTable)
+    extends SubsystemBase:
   private case class DriveGroup(
       primary: CANSparkMax,
       backups: Array[CANSparkMax],
@@ -50,11 +56,76 @@ class Drivetrain(config: Config) extends SubsystemBase:
         ),
         rateLimiter = config.rateLimit.map(limit => SlewRateLimiter(limit))
       )
+    end apply
   end DriveGroup
 
   private object drive:
     val left: DriveGroup = DriveGroup(config.drive.left)
     val right: DriveGroup = DriveGroup(config.drive.right)
+  end drive
+
+  private object networkTables:
+    private val table: NetworkTable = networkTable
+    object publishers:
+      object motors:
+        private val table = networkTables.table.getSubTable("Motors")
+
+        case class Motor(
+            appliedOutput: DoublePublisher,
+            outputCurrent: DoublePublisher,
+            temperature: DoublePublisher
+        )
+        object Motor:
+          def apply(isLeft: Boolean, isPrimary: Boolean, id: Int): Motor =
+            val side = if isLeft then "left" else "right"
+            val primary = if isPrimary then "primary" else "backup"
+            val specifier = s"$side | $primary | $id"
+            Motor(
+              appliedOutput =
+                table.getDoubleTopic(s"Applied output ($specifier)").publish(),
+              outputCurrent =
+                table.getDoubleTopic(s"Output current ($specifier)").publish(),
+              temperature =
+                table.getDoubleTopic(s"Temperature ($specifier)").publish()
+            )
+          end apply
+        end Motor
+
+        val leftOutput = table.getDoubleTopic("Output (left)").publish()
+        val rightOutput = table.getDoubleTopic("Output (right)").publish()
+        val leftPrimary = Motor(
+          isLeft = true,
+          isPrimary = true,
+          id = drive.left.primary.getDeviceId()
+        )
+        def leftBackups = drive.left.backups.map(motor =>
+          (
+            motor,
+            Motor(
+              isLeft = true,
+              isPrimary = false,
+              id = motor.getDeviceId()
+            )
+          )
+        )
+        val rightPrimary = Motor(
+          isLeft = false,
+          isPrimary = true,
+          id = drive.right.primary.getDeviceId()
+        )
+        end rightPrimary
+        def rightBackups = drive.right.backups.map(motor =>
+          (
+            motor,
+            Motor(
+              isLeft = false,
+              isPrimary = false,
+              id = motor.getDeviceId()
+            )
+          )
+        )
+    end publishers
+  end networkTables
 
   private var driveOutput: () => Unit = () => ()
 
@@ -64,6 +135,9 @@ class Drivetrain(config: Config) extends SubsystemBase:
         driveOutput = () => {
           drive.left.primary.stopMotor()
           drive.right.primary.stopMotor()
+
+          networkTables.publishers.motors.leftOutput.set(0)
+          networkTables.publishers.motors.rightOutput.set(0)
         }
       end stop
 
@@ -78,6 +152,9 @@ class Drivetrain(config: Config) extends SubsystemBase:
 
           drive.left.primary.set(leftRateLimited)
           drive.right.primary.set(rightRateLimited)
+
+          networkTables.publishers.motors.leftOutput.set(leftRateLimited)
+          networkTables.publishers.motors.rightOutput.set(rightRateLimited)
         }
       end tankDrive
 
@@ -94,6 +171,9 @@ class Drivetrain(config: Config) extends SubsystemBase:
 
           drive.left.primary.set(leftRateLimited)
           drive.right.primary.set(rightRateLimited)
+
+          networkTables.publishers.motors.leftOutput.set(leftRateLimited)
+          networkTables.publishers.motors.rightOutput.set(rightRateLimited)
         }
       end arcadeDrive
     })
@@ -138,5 +218,42 @@ class Drivetrain(config: Config) extends SubsystemBase:
 
   override def periodic(): Unit =
     driveOutput()
+
+    logPeriodic()
+  end periodic
+
+  private def logPeriodic(): Unit =
+    // Left
+    locally {
+      val (motor, publisher) = (
+        drive.left.primary,
+        networkTables.publishers.motors.leftPrimary
+      )
+      publisher.appliedOutput.set(motor.getAppliedOutput())
+      publisher.outputCurrent.set(motor.getOutputCurrent())
+      publisher.temperature.set(motor.getMotorTemperature())
+    }
+    networkTables.publishers.motors.leftBackups.foreach((motor, publisher) =>
+      publisher.appliedOutput.set(motor.getAppliedOutput())
+      publisher.outputCurrent.set(motor.getOutputCurrent())
+      publisher.temperature.set(motor.getMotorTemperature())
+    )
+
+    // Right
+    locally {
+      val (motor, publisher) = (
+        drive.right.primary,
+        networkTables.publishers.motors.rightPrimary
+      )
+      publisher.appliedOutput.set(motor.getAppliedOutput())
+      publisher.outputCurrent.set(motor.getOutputCurrent())
+      publisher.temperature.set(motor.getMotorTemperature())
+    }
+    networkTables.publishers.motors.rightBackups.foreach((motor, publisher) =>
+      publisher.appliedOutput.set(motor.getAppliedOutput())
+      publisher.outputCurrent.set(motor.getOutputCurrent())
+      publisher.temperature.set(motor.getMotorTemperature())
+    )
+  end logPeriodic
 
 end Drivetrain
