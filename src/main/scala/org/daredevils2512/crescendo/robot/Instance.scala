@@ -10,7 +10,10 @@ object Instance extends TimedRobot:
     container = Some(Container())
 
   override def robotPeriodic(): Unit =
+    container.foreach(container => container.periodic())
+
     CommandScheduler.getInstance().run()
+  end robotPeriodic
 
   override def disabledInit(): Unit = ()
   override def disabledPeriodic(): Unit = ()
