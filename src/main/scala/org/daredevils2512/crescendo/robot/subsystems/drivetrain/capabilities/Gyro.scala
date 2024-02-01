@@ -7,7 +7,6 @@ import coulomb.units.accepted.*
 import coulomb.units.constants.*
 import coulomb.units.si.*
 
-trait Gyro {
+trait Gyro:
   def angle: Quantity[Double, Degree]
   def rate: Quantity[Double, Degree / Second]
-}
