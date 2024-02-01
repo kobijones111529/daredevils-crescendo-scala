@@ -36,9 +36,11 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
   private object DriveGroup:
     def apply(config: Config.Drive.Group): DriveGroup =
       val primary =
-        val motor = CANSparkMax(config.primary, MotorType.kBrushless)
+        val motor = CANSparkMax(config.primary.id, MotorType.kBrushless)
 
         motor.restoreFactoryDefaults()
+
+        motor.setInverted(config.primary.inverted)
 
         motor
       end primary
@@ -98,7 +100,7 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
           isPrimary = true,
           id = drive.left.primary.getDeviceId()
         )
-        def leftBackups = drive.left.backups.map(motor =>
+        val leftBackups = drive.left.backups.map(motor =>
           (
             motor,
             Motor(
@@ -114,7 +116,7 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
           id = drive.right.primary.getDeviceId()
         )
         end rightPrimary
-        def rightBackups = drive.right.backups.map(motor =>
+        val rightBackups = drive.right.backups.map(motor =>
           (
             motor,
             Motor(
@@ -160,7 +162,7 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
 
       override def arcadeDrive(move: Double, turn: Double): Unit =
         driveOutput = () => {
-          val wheelSpeeds = DifferentialDrive.arcadeDriveIK(move, turn, false)
+          val wheelSpeeds = DifferentialDrive.arcadeDriveIK(move, -turn, false)
 
           val leftRateLimited = drive.left.rateLimiter match
             case Some(rateLimiter) => rateLimiter.calculate(wheelSpeeds.left)

@@ -27,11 +27,12 @@ class Container:
   )
 
   val pigeon: Option[Pigeon2] = None
-  val drivetrain: Drivetrain =
+  val drivetrain: Option[Drivetrain] = Some(
     Drivetrain(
       config.drivetrain,
       NetworkTableInstance.getDefault().getTable("Drivetrain")
     )
+  )
 
   def periodic(): Unit =
     pigeon match
@@ -43,13 +44,17 @@ class Container:
   configureBindings()
 
   private def configureBindings(): Unit =
-    drivetrain.setDefaultCommand(
-      drivetrain.run(() =>
-        drivetrain.simpleDrive.foreach(drive =>
-          drive.arcadeDrive(-xbox.getLeftY(), xbox.getLeftX())
+    for {
+      drivetrain <- drivetrain
+    } yield
+      drivetrain.setDefaultCommand(
+        drivetrain.run(() =>
+          drivetrain.simpleDrive.foreach(drive =>
+            drive.arcadeDrive(-xbox.getLeftY(), xbox.getLeftX())
+          )
         )
       )
-    )
+    end for
   end configureBindings
 
   def auto: Option[Command] = None
