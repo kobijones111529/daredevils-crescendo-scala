@@ -29,5 +29,6 @@ package object config:
           )
         )
       )
-    )
+    ),
+    pigeon = Some(DrivetrainConfig.Pigeon(id = 0))
   )

@@ -1,11 +1,13 @@
 package org.daredevils2512.crescendo.robot.subsystems.drivetrain
 
 import algebra.instances.all.given
+import com.ctre.phoenix6.hardware.Pigeon2
 import com.revrobotics.CANSparkLowLevel.MotorType
 import com.revrobotics.CANSparkMax
 import coulomb.*
 import coulomb.policy.standard.given
 import coulomb.syntax.*
+import coulomb.units.accepted.Degree
 import coulomb.units.constants.*
 import coulomb.units.si.*
 import edu.wpi.first.math.filter.SlewRateLimiter
@@ -20,6 +22,7 @@ import org.daredevils2512.crescendo.robot.subsystems.drivetrain.capabilities.{
   EncoderDistance,
   EncoderDistanceRaw,
   EncoderVelocityRaw,
+  Gyro,
   SimpleDrive
 }
 
@@ -60,11 +63,6 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
       )
     end apply
   end DriveGroup
-
-  private object drive:
-    val left: DriveGroup = DriveGroup(config.drive.left)
-    val right: DriveGroup = DriveGroup(config.drive.right)
-  end drive
 
   private object networkTables:
     private val table: NetworkTable = networkTable
@@ -126,10 +124,25 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
             )
           )
         )
+      object gyro:
+        val angle: DoublePublisher =
+          table.getDoubleTopic("Gyro angle (deg)").publish()
+        val rate: DoublePublisher =
+          table.getDoubleTopic("Gyro rate (deg/s)").publish()
     end publishers
   end networkTables
 
+  private object drive:
+    val left: DriveGroup = DriveGroup(config.drive.left)
+    val right: DriveGroup = DriveGroup(config.drive.right)
+  end drive
+
   private var driveOutput: () => Unit = () => ()
+
+  private val pigeon: Option[Pigeon2] =
+    for {
+      config <- config.pigeon
+    } yield Pigeon2(config.id)
 
   val simpleDrive: Option[SimpleDrive] =
     Some(new SimpleDrive {
@@ -218,6 +231,15 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
     })
   end encoderVelocityRaw
 
+  val gyro: Option[Gyro] = pigeon.map(pigeon =>
+    new Gyro {
+      override def angle: Quantity[Double, Degree] =
+        pigeon.getAngle().withUnit[Degree]
+      override def rate: Quantity[Double, Degree / Second] =
+        pigeon.getRate().withUnit[Degree / Second]
+    }
+  )
+
   override def periodic(): Unit =
     driveOutput()
 
@@ -255,6 +277,16 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
       publisher.appliedOutput.set(motor.getAppliedOutput())
       publisher.outputCurrent.set(motor.getOutputCurrent())
       publisher.temperature.set(motor.getMotorTemperature())
+    )
+
+    // Gyro
+    gyro.map(gyro =>
+      networkTables.publishers.gyro.angle.set(
+        gyro.angle.toUnit[Degree].value
+      )
+      networkTables.publishers.gyro.rate.set(
+        gyro.rate.toUnit[Degree / Second].value
+      )
     )
   end logPeriodic
 

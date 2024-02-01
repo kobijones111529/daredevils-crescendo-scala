@@ -9,8 +9,8 @@ import edu.wpi.first.networktables.{
   NetworkTableInstance,
   Topic
 }
-import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
+import edu.wpi.first.wpilibj2.command.{Command, RamseteCommand}
 import org.daredevils2512.crescendo.robot.subsystems.drivetrain.Drivetrain
 
 class Container:
@@ -56,7 +56,6 @@ class Container:
         )
       )
     )
-
   end configureBindings
 
   def auto: Option[Command] = None
