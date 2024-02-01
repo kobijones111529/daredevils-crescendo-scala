@@ -3,7 +3,7 @@ package org.daredevils2512.crescendo.robot.subsystems.drivetrain
 import coulomb.*
 import coulomb.units.si.*
 
-case class Config(drive: Config.Drive)
+case class Config(drive: Config.Drive, pigeon: Option[Config.Pigeon])
 
 object Config:
   case class Drive(left: Drive.Group, right: Drive.Group)
@@ -17,3 +17,7 @@ object Config:
     object Group:
       case class Primary(id: Int, inverted: Boolean)
       case class Encoder(distancePerUnit: Option[Quantity[Double, Meter]])
+    end Group
+  end Drive
+
+  case class Pigeon(id: Int)
