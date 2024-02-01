@@ -18,7 +18,13 @@ import edu.wpi.first.networktables.{
 }
 import edu.wpi.first.wpilibj.drive.DifferentialDrive
 import edu.wpi.first.wpilibj2.command.SubsystemBase
-import org.daredevils2512.crescendo.robot.subsystems.drivetrain.capabilities.{EncoderDistance, EncoderDistanceRaw, EncoderVelocityRaw, Gyro, SimpleDrive}
+import org.daredevils2512.crescendo.robot.subsystems.drivetrain.capabilities.{
+  EncoderDistance,
+  EncoderDistanceRaw,
+  EncoderVelocityRaw,
+  Gyro,
+  SimpleDrive
+}
 
 import scala.language.implicitConversions
 import scala.math.Numeric.*
@@ -136,9 +142,7 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
   private val pigeon: Option[Pigeon2] =
     for {
       config <- config.pigeon
-    } yield
-      Pigeon2(config.id)
-    end for
+    } yield Pigeon2(config.id)
 
   val simpleDrive: Option[SimpleDrive] =
     Some(new SimpleDrive {
@@ -229,9 +233,10 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
 
   val gyro: Option[Gyro] = pigeon.map(pigeon =>
     new Gyro {
-      override def angle(): Quantity[Double, Degree] =
+      override def angle: Quantity[Double, Degree] =
         pigeon.getAngle().withUnit[Degree]
-      end angle
+      override def rate: Quantity[Double, Degree / Second] =
+        pigeon.getRate().withUnit[Degree / Second]
     }
   )
 
@@ -274,9 +279,14 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
       publisher.temperature.set(motor.getMotorTemperature())
     )
 
+    // Gyro
     gyro.map(gyro =>
-      networkTables.publishers.gyro.angle.set(???)
-      networkTables.publishers.gyro.rate.set(???)
+      networkTables.publishers.gyro.angle.set(
+        gyro.angle.toUnit[Degree].value
+      )
+      networkTables.publishers.gyro.rate.set(
+        gyro.rate.toUnit[Degree / Second].value
+      )
     )
   end logPeriodic
 
