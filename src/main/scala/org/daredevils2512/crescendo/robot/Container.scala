@@ -47,19 +47,15 @@ class Container:
   private def configureBindings(): Unit =
     for {
       drivetrain <- drivetrain
-    } yield
-      drivetrain.setDefaultCommand(
-        drivetrain.run(() =>
-          drivetrain.simpleDrive.foreach(drive =>
-            val move = MathUtil.applyDeadband(-xbox.getLeftY, 0.1)
-            val turn = MathUtil.applyDeadband(xbox.getLeftX, 0.1)
-            drive.arcadeDrive(move, turn)
-          )
+    } yield drivetrain.setDefaultCommand(
+      drivetrain.run(() =>
+        drivetrain.simpleDrive.foreach(drive =>
+          val move = MathUtil.applyDeadband(-xbox.getLeftY, 0.1)
+          val turn = MathUtil.applyDeadband(xbox.getLeftX, 0.1)
+          drive.arcadeDrive(move, turn)
         )
       )
-
-      // val command = RamseteCommand(???, ???, ???, ???, ???, drivetrain)
-    end for
+    )
   end configureBindings
 
   def auto: Option[Command] = None
