@@ -11,6 +11,8 @@ import coulomb.units.accepted.Degree
 import coulomb.units.constants.*
 import coulomb.units.si.*
 import edu.wpi.first.math.filter.SlewRateLimiter
+import edu.wpi.first.math.geometry.{Pose2d, Rotation2d}
+import edu.wpi.first.math.kinematics.DifferentialDriveOdometry
 import edu.wpi.first.networktables.{
   DoublePublisher,
   NetworkTable,
@@ -23,6 +25,7 @@ import org.daredevils2512.crescendo.robot.subsystems.drivetrain.capabilities.{
   EncoderDistanceRaw,
   EncoderVelocityRaw,
   Gyro,
+  Pose,
   SimpleDrive
 }
 
@@ -143,6 +146,7 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
     for {
       config <- config.pigeon
     } yield Pigeon2(config.id)
+  end pigeon
 
   val simpleDrive: Option[SimpleDrive] =
     Some(new SimpleDrive {
@@ -240,8 +244,36 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
     }
   )
 
+  private val odometry: Option[DifferentialDriveOdometry] =
+    for {
+      encoderDistance <- encoderDistance
+      gyro <- gyro
+    } yield DifferentialDriveOdometry(
+      Rotation2d(gyro.angle.toUnit[Radian].value),
+      encoderDistance.left.toUnit[Meter].value,
+      encoderDistance.right.toUnit[Meter].value
+    )
+
+  val pose: Option[Pose] =
+    odometry.map(odometry =>
+      new Pose {
+        override def pose: Pose2d = odometry.getPoseMeters()
+      }
+    )
+  end pose
+
   override def periodic(): Unit =
     driveOutput()
+
+    for {
+      odometry <- odometry
+      encoderDistance <- encoderDistance
+      gyro <- gyro
+    } yield odometry.update(
+      Rotation2d(gyro.angle.toUnit[Radian].value),
+      encoderDistance.left.toUnit[Meter].value,
+      encoderDistance.right.toUnit[Meter].value
+    )
 
     logPeriodic()
   end periodic
