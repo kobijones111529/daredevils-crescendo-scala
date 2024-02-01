@@ -1,6 +1,7 @@
 package org.daredevils2512.crescendo.robot
 
 import com.ctre.phoenix6.hardware.Pigeon2
+import edu.wpi.first.math.MathUtil
 import edu.wpi.first.networktables.{
   DoublePublisher,
   NetworkTable,
@@ -50,7 +51,9 @@ class Container:
       drivetrain.setDefaultCommand(
         drivetrain.run(() =>
           drivetrain.simpleDrive.foreach(drive =>
-            drive.arcadeDrive(-xbox.getLeftY(), xbox.getLeftX())
+            val move = MathUtil.applyDeadband(-xbox.getLeftY, 0.1)
+            val turn = MathUtil.applyDeadband(xbox.getLeftX, 0.1)
+            drive.arcadeDrive(move, turn)
           )
         )
       )
