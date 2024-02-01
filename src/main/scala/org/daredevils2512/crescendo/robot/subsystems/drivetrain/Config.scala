@@ -6,7 +6,11 @@ import coulomb.units.si.*
 case class Config(drive: Config.Drive, pigeon: Option[Config.Pigeon])
 
 object Config:
-  case class Drive(left: Drive.Group, right: Drive.Group)
+  case class Drive(
+      left: Drive.Group,
+      right: Drive.Group,
+      trackWidth: Option[Quantity[Double, Meter]]
+  )
   object Drive:
     case class Group(
         primary: Group.Primary,

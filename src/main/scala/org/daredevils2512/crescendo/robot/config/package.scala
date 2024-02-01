@@ -28,7 +28,8 @@ package object config:
             distancePerUnit = None
           )
         )
-      )
+      ),
+      trackWidth = None
     ),
     pigeon = Some(DrivetrainConfig.Pigeon(id = 0))
   )

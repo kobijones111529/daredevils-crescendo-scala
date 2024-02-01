@@ -12,7 +12,7 @@ import coulomb.units.constants.*
 import coulomb.units.si.*
 import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.math.geometry.{Pose2d, Rotation2d}
-import edu.wpi.first.math.kinematics.DifferentialDriveOdometry
+import edu.wpi.first.math.kinematics.{DifferentialDriveKinematics, DifferentialDriveOdometry}
 import edu.wpi.first.networktables.{
   DoublePublisher,
   NetworkTable,
@@ -25,6 +25,7 @@ import org.daredevils2512.crescendo.robot.subsystems.drivetrain.capabilities.{
   EncoderDistanceRaw,
   EncoderVelocityRaw,
   Gyro,
+  Kinematics,
   Pose,
   SimpleDrive
 }
@@ -234,6 +235,17 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
       override def right: Double = drive.right.primary.getEncoder.getVelocity
     })
   end encoderVelocityRaw
+
+  private val _kinematics: Option[DifferentialDriveKinematics] =
+    config.drive.trackWidth.map(trackWidth =>
+      DifferentialDriveKinematics(trackWidth.toUnit[Meter].value)
+    )
+
+  val kinematics: Option[Kinematics] = _kinematics.map(_kinematics =>
+    new Kinematics {
+      override def kinematics: DifferentialDriveKinematics = _kinematics
+    }
+  )
 
   val gyro: Option[Gyro] = pigeon.map(pigeon =>
     new Gyro {
