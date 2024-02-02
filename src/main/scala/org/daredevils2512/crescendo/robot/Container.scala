@@ -1,6 +1,5 @@
 package org.daredevils2512.crescendo.robot
 
-import com.ctre.phoenix6.hardware.Pigeon2
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.networktables.{
   DoublePublisher,
@@ -9,25 +8,21 @@ import edu.wpi.first.networktables.{
   NetworkTableInstance,
   Topic
 }
+import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
-import edu.wpi.first.wpilibj2.command.{Command, RamseteCommand}
 import org.daredevils2512.crescendo.robot.subsystems.drivetrain.Drivetrain
 
 class Container:
   object networkTables:
     val table: NetworkTable =
       NetworkTableInstance.getDefault().getTable("Robot container")
-    object publishers:
-      val pigeonAngle: DoublePublisher =
-        table.getDoubleTopic("Pigeon angle (deg)").publish()
-    end publishers
+    object publishers
   end networkTables
 
   val xbox: CommandXboxController = CommandXboxController(
     config.controllers.xbox
   )
 
-  val pigeon: Option[Pigeon2] = None
   val drivetrain: Option[Drivetrain] = Some(
     Drivetrain(
       config.drivetrain,
@@ -35,27 +30,20 @@ class Container:
     )
   )
 
-  def periodic(): Unit =
-    pigeon match
-      case None => networkTables.publishers.pigeonAngle.set(0)
-      case Some(pigeon) =>
-        networkTables.publishers.pigeonAngle.set(pigeon.getAngle())
-  end periodic
+  def periodic(): Unit = ()
 
   configureBindings()
 
   private def configureBindings(): Unit =
     for {
       drivetrain <- drivetrain
-    } yield drivetrain.setDefaultCommand(
-      drivetrain.run(() =>
-        drivetrain.simpleDrive.foreach(drive =>
-          val move = MathUtil.applyDeadband(-xbox.getLeftY, 0.1)
-          val turn = MathUtil.applyDeadband(xbox.getLeftX, 0.1)
-          drive.arcadeDrive(move, turn)
-        )
+      simpleDrive <- drivetrain.simpleDrive
+    } yield
+      def move = MathUtil.applyDeadband(-xbox.getLeftY(), 0.1)
+      def turn = MathUtil.applyDeadband(xbox.getLeftX(), 0.1)
+      drivetrain.setDefaultCommand(
+        commands.drive.arcade(drivetrain, simpleDrive, move, turn)
       )
-    )
   end configureBindings
 
   def auto: Option[Command] = None
