@@ -12,7 +12,11 @@ import coulomb.units.constants.*
 import coulomb.units.si.*
 import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.math.geometry.{Pose2d, Rotation2d}
-import edu.wpi.first.math.kinematics.{DifferentialDriveKinematics, DifferentialDriveOdometry}
+import edu.wpi.first.math.kinematics.{
+  ChassisSpeeds,
+  DifferentialDriveKinematics,
+  DifferentialDriveOdometry
+}
 import edu.wpi.first.networktables.{
   DoublePublisher,
   NetworkTable,
@@ -27,7 +31,8 @@ import org.daredevils2512.crescendo.robot.subsystems.drivetrain.capabilities.{
   Gyro,
   Kinematics,
   Pose,
-  SimpleDrive
+  SimpleDrive,
+  VelocityDrive
 }
 
 import scala.language.implicitConversions
@@ -246,6 +251,50 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
       override def kinematics: DifferentialDriveKinematics = _kinematics
     }
   )
+
+  val velocityDrive: Option[VelocityDrive] =
+    for {
+      leftFeedforward <- config.drive.left.feedforward
+      rightFeedforward <- config.drive.right.feedforward
+      kinematics <- kinematics
+    } yield new VelocityDrive {
+      override def tank(
+          left: Quantity[Double, Meter / Second],
+          right: Quantity[Double, Meter / Second]
+      ): Unit =
+        driveOutput = () => {
+          val leftOut =
+            leftFeedforward.calculate(left.toUnit[Meter / Second].value)
+          val rightOut =
+            rightFeedforward.calculate(right.toUnit[Meter / Second].value)
+
+          drive.left.primary.set(leftOut)
+          drive.right.primary.set(rightOut)
+
+          networkTables.publishers.motors.leftOutput.set(leftOut)
+          networkTables.publishers.motors.rightOutput.set(rightOut)
+        }
+
+      override def arcade(
+          move: Quantity[Double, Meter / Second],
+          turn: Quantity[Double, Degree / Second]
+      ): Unit =
+        val chassisSpeeds = ChassisSpeeds(
+          move.toUnit[Meter / Second].value,
+          0,
+          turn.toUnit[Radian / Second].value
+        )
+        val wheelSpeeds = kinematics.kinematics.toWheelSpeeds(chassisSpeeds)
+        val leftOut = leftFeedforward.calculate(wheelSpeeds.leftMetersPerSecond)
+        val rightOut =
+          rightFeedforward.calculate(wheelSpeeds.rightMetersPerSecond)
+
+        drive.left.primary.set(leftOut)
+        drive.right.primary.set(rightOut)
+
+        networkTables.publishers.motors.leftOutput.set(leftOut)
+        networkTables.publishers.motors.rightOutput.set(rightOut)
+    }
 
   val gyro: Option[Gyro] = pigeon.map(pigeon =>
     new Gyro {

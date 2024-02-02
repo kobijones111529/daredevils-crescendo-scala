@@ -2,6 +2,7 @@ package org.daredevils2512.crescendo.robot.subsystems.drivetrain
 
 import coulomb.*
 import coulomb.units.si.*
+import edu.wpi.first.math.controller.SimpleMotorFeedforward
 
 case class Config(drive: Config.Drive, pigeon: Option[Config.Pigeon])
 
@@ -16,6 +17,7 @@ object Config:
         primary: Group.Primary,
         backups: Array[Int],
         rateLimit: Option[Double],
+        feedforward: Option[SimpleMotorFeedforward],
         encoder: Option[Group.Encoder]
     )
     object Group:
