@@ -27,7 +27,7 @@ package object drive:
       turn: => Double
   ): Command =
     drivetrain
-      .run(() => simpleDrive.arcadeDrive(move, turn))
+      .run(() => simpleDrive.arcade(move, turn))
       .finallyDo(() => simpleDrive.stop())
   end arcade
 

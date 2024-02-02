@@ -166,7 +166,7 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
         }
       end stop
 
-      override def tankDrive(left: Double, right: Double): Unit =
+      override def tank(left: Double, right: Double): Unit =
         driveOutput = () => {
           val leftRateLimited = drive.left.rateLimiter match
             case Some(rateLimiter) => rateLimiter.calculate(left)
@@ -181,9 +181,9 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
           networkTables.publishers.motors.leftOutput.set(leftRateLimited)
           networkTables.publishers.motors.rightOutput.set(rightRateLimited)
         }
-      end tankDrive
+      end tank
 
-      override def arcadeDrive(move: Double, turn: Double): Unit =
+      override def arcade(move: Double, turn: Double): Unit =
         driveOutput = () => {
           val wheelSpeeds = DifferentialDrive.arcadeDriveIK(move, -turn, false)
 
@@ -200,7 +200,7 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
           networkTables.publishers.motors.leftOutput.set(leftRateLimited)
           networkTables.publishers.motors.rightOutput.set(rightRateLimited)
         }
-      end arcadeDrive
+      end arcade
     })
   end simpleDrive
 
