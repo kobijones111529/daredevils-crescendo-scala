@@ -1,6 +1,7 @@
 package org.daredevils2512.crescendo.robot
 
 import org.daredevils2512.crescendo.robot.subsystems.drivetrain.Config as DrivetrainConfig
+import org.daredevils2512.crescendo.robot.subsystems.extake.Config as ExtakeConfig
 
 package object config:
   object controllers:
@@ -10,8 +11,8 @@ package object config:
   val drivetrain: DrivetrainConfig = DrivetrainConfig(
     drive = DrivetrainConfig.Drive(
       left = DrivetrainConfig.Drive.Group(
-        primary = DrivetrainConfig.Drive.Group.Primary(1, false),
-        backups = Array(2),
+        primary = DrivetrainConfig.Drive.Group.Primary(can.drivetrain.left.primary, false),
+        backups = can.drivetrain.left.backups,
         rateLimit = Some(3),
         feedforward = None,
         encoder = Some(
@@ -21,8 +22,8 @@ package object config:
         )
       ),
       right = DrivetrainConfig.Drive.Group(
-        primary = DrivetrainConfig.Drive.Group.Primary(3, true),
-        backups = Array(4),
+        primary = DrivetrainConfig.Drive.Group.Primary(can.drivetrain.right.primary, true),
+        backups = can.drivetrain.right.backups,
         rateLimit = Some(3),
         feedforward = None,
         encoder = Some(
@@ -33,5 +34,18 @@ package object config:
       ),
       trackWidth = None
     ),
-    pigeon = Some(DrivetrainConfig.Pigeon(id = 0))
+    pigeon = Some(DrivetrainConfig.Pigeon(can.drivetrain.pigeon))
+  )
+
+  val extake: ExtakeConfig = ExtakeConfig(
+    actuator = ExtakeConfig.Actuator(
+      motorGroup = ExtakeConfig.Actuator.MotorGroup(
+        primary = ExtakeConfig.Actuator.MotorGroup.Primary(can.extake.actuator.primary)
+      )
+    ),
+    feed = ExtakeConfig.Feed(
+      motorGroup = ExtakeConfig.Feed.MotorGroup(
+        primary = ExtakeConfig.Feed.MotorGroup.Primary(can.extake.feed.primary)
+      )
+    )
   )

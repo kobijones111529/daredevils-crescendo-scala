@@ -18,6 +18,7 @@ import org.daredevils2512.crescendo.robot.subsystems.drivetrain.capabilities.{
 }
 
 import scala.language.implicitConversions
+import org.daredevils2512.crescendo.robot.subsystems.drivetrain.capabilities.EncoderDistance
 
 package object drive:
   def arcade(
@@ -30,6 +31,13 @@ package object drive:
       .run(() => simpleDrive.arcade(move, turn))
       .finallyDo(() => simpleDrive.stop())
   end arcade
+
+  def driveDistance(
+    drivetrain: Drivetrain,
+    simpleDrive: SimpleDrive,
+    encoderDistance: EncoderDistance,
+    distance: Quantity[Double, Meter]
+  ): Command = ???
 
   def ramsete(
       drivetrain: Drivetrain,
