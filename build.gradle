@@ -1,7 +1,6 @@
 plugins {
     id "scala"
     id "edu.wpi.first.GradleRIO" version "2024.1.1"
-    id "io.github.cosmicsilence.scalafix" version "0.2.0"
 }
 
 java.toolchain {
