@@ -9,7 +9,10 @@ import coulomb.units.si.{*, given}
 import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.wpilibj2.command.Command
 import org.daredevils2512.crescendo.robot.subsystems.drivetrain.Drivetrain
-import org.daredevils2512.crescendo.robot.subsystems.drivetrain.capabilities.{EncoderDistance, SimpleDrive}
+import org.daredevils2512.crescendo.robot.subsystems.drivetrain.capabilities.{
+  EncoderDistance,
+  SimpleDrive
+}
 import org.daredevils2512.util.uom.abs
 
 import scala.language.implicitConversions
