@@ -32,13 +32,6 @@ package object drive:
       .finallyDo(() => simpleDrive.stop())
   end arcade
 
-  def driveDistance(
-      drivetrain: Drivetrain,
-      simpleDrive: SimpleDrive,
-      encoderDistance: EncoderDistance,
-      distance: Quantity[Double, Meter]
-  ): Command = ???
-
   def ramsete(
       drivetrain: Drivetrain,
       velocityDrive: VelocityDrive,

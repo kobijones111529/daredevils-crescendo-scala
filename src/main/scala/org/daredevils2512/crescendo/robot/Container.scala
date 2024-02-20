@@ -78,10 +78,12 @@ class Container:
       encoderDistance <- drivetrain.encoderDistance
     } yield
       val command = commands.drive.driveDistance(
-        drivetrain,
-        simpleDrive,
-        encoderDistance,
-        10.withUnit[Meter]
+        drivetrain = drivetrain,
+        simpleDrive = simpleDrive,
+        encoderDistance = encoderDistance,
+        dist = 10.withUnit[Meter],
+        tolerance = Some(10.withUnit[Meter / 100]),
+        maxOutput = 0.5
       )
       xbox.b().onTrue(command)
     end for
