@@ -16,6 +16,7 @@ import edu.wpi.first.networktables.{
 }
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
+import org.daredevils2512.crescendo.robot.subsystems.arm.Arm
 import org.daredevils2512.crescendo.robot.subsystems.drivetrain.Drivetrain
 import org.daredevils2512.crescendo.robot.subsystems.extake.Extake
 import org.daredevils2512.crescendo.robot.subsystems.intake.Intake
@@ -42,6 +43,10 @@ class Container:
   val intake: Option[Intake] =
     Some(
       Intake(config.intake)
+    )
+  val arm: Option[Arm] =
+    Some(
+      Arm(config.arm)
     )
   val extake: Option[Extake] =
     Some(
@@ -93,13 +98,21 @@ class Container:
     end for
 
     for {
+      arm <- arm
+    } yield
+      def speed = MathUtil.applyDeadband(-xbox.getRightY(), 0.1)
+      arm.setDefaultCommand(
+        commands.arm.run(
+          arm = arm,
+          simpleActuate = arm.simpleActuate,
+          speed = speed
+        )
+      )
+    end for
+
+    for {
       extake <- extake
     } yield
-      def actuate = MathUtil.applyDeadband(-xbox.getRightY(), 0.1)
-      extake.setDefaultCommand(
-        extake.runOnce(() => extake.simpleActuate.run(actuate))
-      )
-
       xbox
         .a()
         .whileTrue(

@@ -11,8 +11,7 @@ package object can:
     val pigeon: Int = 0
   object intake:
     val primary: Int = 5
+  object arm:
+    val primary: Int = 7
   object extake:
-    object actuator:
-      val primary: Int = 7
-    object feed:
-      val primary: Int = 6
+    val primary: Int = 6

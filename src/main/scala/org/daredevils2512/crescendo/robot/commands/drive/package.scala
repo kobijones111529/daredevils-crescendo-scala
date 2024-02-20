@@ -12,7 +12,11 @@ import edu.wpi.first.math.kinematics.DifferentialDriveKinematics
 import edu.wpi.first.math.trajectory.Trajectory
 import edu.wpi.first.wpilibj2.command.{Command, RamseteCommand}
 import org.daredevils2512.crescendo.robot.subsystems.drivetrain.Drivetrain
-import org.daredevils2512.crescendo.robot.subsystems.drivetrain.capabilities.{EncoderDistance, SimpleDrive, VelocityDrive}
+import org.daredevils2512.crescendo.robot.subsystems.drivetrain.capabilities.{
+  EncoderDistance,
+  SimpleDrive,
+  VelocityDrive
+}
 
 import scala.language.implicitConversions
 
