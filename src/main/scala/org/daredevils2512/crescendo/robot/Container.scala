@@ -1,5 +1,11 @@
 package org.daredevils2512.crescendo.robot
 
+import algebra.instances.all.given
+import coulomb.*
+import coulomb.ops.algebra.all.given
+import coulomb.policy.standard.given
+import coulomb.syntax.*
+import coulomb.units.si.{*, given}
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.networktables.{
   DoublePublisher,
@@ -12,13 +18,7 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import org.daredevils2512.crescendo.robot.subsystems.drivetrain.Drivetrain
 import org.daredevils2512.crescendo.robot.subsystems.extake.Extake
-
-import algebra.instances.all.given
-import coulomb.*
-import coulomb.ops.algebra.all.given
-import coulomb.policy.standard.given
-import coulomb.syntax.*
-import coulomb.units.si.{*, given}
+import org.daredevils2512.crescendo.robot.subsystems.intake.Intake
 
 class Container:
   object networkTables:
@@ -39,9 +39,16 @@ class Container:
     //     NetworkTableInstance.getDefault().getTable("Drivetrain")
     //   )
     // )
+  val intake: Option[Intake] =
+    Some(
+      Intake(config.intake)
+    )
   val extake: Option[Extake] =
     Some(
-      Extake(config.extake)
+      Extake(
+        config.extake,
+        NetworkTableInstance.getDefault().getTable("Extake")
+      )
     )
 
   def periodic(): Unit = ()
@@ -65,8 +72,24 @@ class Container:
       simpleDrive <- drivetrain.simpleDrive
       encoderDistance <- drivetrain.encoderDistance
     } yield
-      val command = commands.drive.driveDistance(drivetrain, simpleDrive, encoderDistance, 10.withUnit[Meter])
+      val command = commands.drive.driveDistance(
+        drivetrain,
+        simpleDrive,
+        encoderDistance,
+        10.withUnit[Meter]
+      )
       xbox.b().onTrue(command)
+    end for
+
+    for {
+      intake <- intake
+    } yield
+      val command = commands.intake.run(
+        intake = intake,
+        simpleIntake = intake.simpleIntake,
+        speed = config.control.intakeSpeed
+      )
+      xbox.rightBumper().whileTrue(command)
     end for
 
     for {
@@ -74,29 +97,48 @@ class Container:
     } yield
       def actuate = MathUtil.applyDeadband(-xbox.getRightY(), 0.1)
       extake.setDefaultCommand(
-        extake.runOnce(() =>
-          extake.simpleActuate.run(actuate)
-        )
+        extake.runOnce(() => extake.simpleActuate.run(actuate))
       )
 
-      xbox.a().onTrue(
-        extake.runOnce(() =>
-          extake.simpleFeed.run(-1.0)
+      xbox
+        .a()
+        .whileTrue(
+          commands.extake.run(
+            extake = extake,
+            simpleFeed = extake.simpleFeed,
+            speed = config.control.extakeSpeed
+          )
         )
-      )
-      xbox.a().onFalse(
-        extake.runOnce(() => extake.simpleFeed.stop())
-      )
+      xbox
+        .b()
+        .whileTrue(
+          commands.extake.run(
+            extake = extake,
+            simpleFeed = extake.simpleFeed,
+            speed = -config.control.extakeSpeed
+          )
+        )
+    end for
 
-      xbox.y().onTrue(
-        extake.runOnce(() =>
-          extake.simpleFeed.run(1.0)
-        )
-      )
-      xbox.y().onFalse(
-        extake.runOnce(() =>
-          extake.simpleFeed.stop()
-        )
+    for {
+      intake <- intake
+      extake <- extake
+    } yield xbox
+      .rightTrigger()
+      .whileTrue(
+        commands.intake
+          .run(
+            intake = intake,
+            simpleIntake = intake.simpleIntake,
+            speed = config.control.intakeSpeed
+          )
+          .alongWith(
+            commands.extake.run(
+              extake = extake,
+              simpleFeed = extake.simpleFeed,
+              speed = config.control.extakeSpeed
+            )
+          )
       )
     end for
   end configureBindings

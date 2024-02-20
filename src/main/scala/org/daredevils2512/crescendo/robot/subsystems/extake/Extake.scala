@@ -1,38 +1,43 @@
 package org.daredevils2512.crescendo.robot.subsystems.extake
 
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX
-import org.daredevils2512.crescendo.robot.subsystems.extake.capabilities.SimpleFeed
-import edu.wpi.first.wpilibj2.command.SubsystemBase
-import org.daredevils2512.crescendo.robot.subsystems.extake.capabilities.SimpleActuate
 import com.ctre.phoenix.motorcontrol.NeutralMode
-import edu.wpi.first.networktables.NetworkTable
-import edu.wpi.first.networktables.DoublePublisher
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX
+import edu.wpi.first.networktables.{DoublePublisher, NetworkTable}
+import edu.wpi.first.wpilibj2.command.SubsystemBase
+import org.daredevils2512.crescendo.robot.subsystems.extake.capabilities.{SimpleActuate, SimpleFeed}
 
-class Extake(networkTable: NetworkTable, config: Config) extends SubsystemBase:
+class Extake(config: Config, networkTable: NetworkTable) extends SubsystemBase:
   private object networkTables:
     private val table: NetworkTable = networkTable
     object motors:
-      private val table: NetworkTable = table.getSubTable("Motors")
+      private val table: NetworkTable = networkTable.getSubTable("Motors")
 
       case class Motor(
-        appliedOutput: DoublePublisher,
-        outputCurrent: DoublePublisher,
-        temperature: DoublePublisher
+          appliedOutput: DoublePublisher,
+          outputCurrent: DoublePublisher,
+          temperature: DoublePublisher
       )
       object Motor:
         def apply(part: String, id: Int): Motor =
           Motor(
-            appliedOutput = table.getDoubleTopic(s"Applied output ($part | primary | $id)").publish(),
-            outputCurrent = table.getDoubleTopic(s"Output current ($part | primary | $id)").publish(),
-            temperature = table.getDoubleTopic(s"Temperature ($part | primary | $id)").publish()
+            appliedOutput = table
+              .getDoubleTopic(s"Applied output ($part | primary | $id)")
+              .publish(),
+            outputCurrent = table
+              .getDoubleTopic(s"Output current ($part | primary | $id)")
+              .publish(),
+            temperature = table
+              .getDoubleTopic(s"Temperature ($part | primary | $id)")
+              .publish()
           )
         end apply
 
-      val actuatorPrimary: Motor = Motor("actuator", config.actuator.motorGroup.primary.id)
+      val actuatorPrimary: Motor =
+        Motor("actuator", config.actuator.motorGroup.primary.id)
       val feedPrimary: Motor = Motor("feed", config.feed.motorGroup.primary.id)
 
   private case class Actuator(
-    motorGroup: Actuator.MotorGroup
+      motorGroup: Actuator.MotorGroup
   )
   private object Actuator:
     case class MotorGroup(primary: WPI_TalonSRX)
@@ -108,7 +113,9 @@ class Extake(networkTable: NetworkTable, config: Config) extends SubsystemBase:
 
     locally {
       val motor = networkTables.motors.actuatorPrimary
-      motor.appliedOutput.set(actuator.motorGroup.primary.getMotorOutputPercent())
+      motor.appliedOutput.set(
+        actuator.motorGroup.primary.getMotorOutputPercent()
+      )
       motor.outputCurrent.set(actuator.motorGroup.primary.getStatorCurrent())
       motor.temperature.set(actuator.motorGroup.primary.getTemperature())
     }

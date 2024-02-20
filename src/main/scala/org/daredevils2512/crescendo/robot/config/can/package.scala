@@ -9,8 +9,10 @@ package object can:
       val primary: Int = 2
       val backups: Array[Int] = Array(3)
     val pigeon: Int = 0
+  object intake:
+    val primary: Int = 5
   object extake:
     object actuator:
-      val primary: Int = 10
+      val primary: Int = 7
     object feed:
-      val primary: Int = 11
+      val primary: Int = 6
