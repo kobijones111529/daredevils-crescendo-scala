@@ -59,7 +59,8 @@ class Container:
   val climber: Option[Climber] =
     Some(
       Climber(
-        config.climber
+        config.climber,
+        networkTables.table.getSubTable("Climber")
       )
     )
 

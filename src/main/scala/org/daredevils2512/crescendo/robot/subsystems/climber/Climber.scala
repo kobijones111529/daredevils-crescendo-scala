@@ -2,10 +2,25 @@ package org.daredevils2512.crescendo.robot.subsystems.climber
 
 import com.ctre.phoenix.motorcontrol.can.TalonSRX
 import com.ctre.phoenix.motorcontrol.{ControlMode, NeutralMode}
+import edu.wpi.first.networktables.NetworkTable
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import org.daredevils2512.crescendo.robot.subsystems.climber.capabilities.SimpleClimber
 
-class Climber(config: Config) extends SubsystemBase:
+class Climber(config: Config, networkTable: NetworkTable) extends SubsystemBase:
+  object networkTables:
+    object motors:
+      object left:
+        val appliedOutput =
+          networkTable.getDoubleTopic("Applied output (left)").publish()
+        val statorCurrent =
+          networkTable.getDoubleTopic("Stator current (left)").publish()
+      object right:
+        val appliedOutput =
+          networkTable.getDoubleTopic("Applied output (right)").publish()
+        val statorCurrent =
+          networkTable.getDoubleTopic("Stator current (right)").publish()
+  end networkTables
+
   case class MotorGroup(primary: TalonSRX)
   object MotorGroup:
     def apply(config: Config.MotorGroup): MotorGroup =
@@ -37,3 +52,19 @@ class Climber(config: Config) extends SubsystemBase:
       end run
     }
   end simpleClimber
+
+  override def periodic(): Unit =
+    locally {
+      val motor = drive.left.primary
+      val group = networkTables.motors.left
+      group.appliedOutput.set(motor.getMotorOutputPercent())
+      group.statorCurrent.set(motor.getStatorCurrent())
+    }
+
+    locally {
+      val motor = drive.right.primary
+      val group = networkTables.motors.right
+      group.appliedOutput.set(motor.getMotorOutputPercent())
+      group.statorCurrent.set(motor.getStatorCurrent())
+    }
+  end periodic
