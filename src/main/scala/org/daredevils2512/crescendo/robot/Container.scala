@@ -24,7 +24,7 @@ import org.daredevils2512.crescendo.robot.subsystems.intake.Intake
 class Container:
   object networkTables:
     val table: NetworkTable =
-      NetworkTableInstance.getDefault().getTable("Robot container")
+      NetworkTableInstance.getDefault().getTable("Robot")
     object publishers
   end networkTables
 
@@ -33,13 +33,13 @@ class Container:
   )
 
   val drivetrain: Option[Drivetrain] =
-    None
-    // Some(
-    //   Drivetrain(
-    //     config.drivetrain,
-    //     NetworkTableInstance.getDefault().getTable("Drivetrain")
-    //   )
-    // )
+    // None
+    Some(
+      Drivetrain(
+        config.drivetrain,
+        networkTables.table.getSubTable("Drivetrain")
+      )
+    )
   val intake: Option[Intake] =
     Some(
       Intake(config.intake)
@@ -52,7 +52,7 @@ class Container:
     Some(
       Extake(
         config.extake,
-        NetworkTableInstance.getDefault().getTable("Extake")
+        networkTables.table.getSubTable("Extake")
       )
     )
 

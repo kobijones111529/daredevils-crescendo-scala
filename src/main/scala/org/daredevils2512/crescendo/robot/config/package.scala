@@ -25,7 +25,7 @@ package object config:
         feedforward = None,
         encoder = Some(
           DrivetrainConfig.Drive.Group.Encoder(
-            distancePerUnit = None
+            distancePerRevolution = None
           )
         )
       ),
@@ -37,7 +37,7 @@ package object config:
         feedforward = None,
         encoder = Some(
           DrivetrainConfig.Drive.Group.Encoder(
-            distancePerUnit = None
+            distancePerRevolution = None
           )
         )
       ),

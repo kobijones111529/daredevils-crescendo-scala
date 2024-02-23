@@ -11,6 +11,7 @@ import coulomb.units.accepted.Degree
 import coulomb.units.constants.*
 import coulomb.units.si.*
 import edu.wpi.first.math.filter.SlewRateLimiter
+import edu.wpi.first.math.geometry.struct.Pose2dStruct
 import edu.wpi.first.math.geometry.{Pose2d, Rotation2d}
 import edu.wpi.first.math.kinematics.{
   ChassisSpeeds,
@@ -20,7 +21,8 @@ import edu.wpi.first.math.kinematics.{
 import edu.wpi.first.networktables.{
   DoublePublisher,
   NetworkTable,
-  NetworkTableInstance
+  NetworkTableInstance,
+  StructPublisher
 }
 import edu.wpi.first.wpilibj.drive.DifferentialDrive
 import edu.wpi.first.wpilibj2.command.SubsystemBase
@@ -35,6 +37,7 @@ import org.daredevils2512.crescendo.robot.subsystems.drivetrain.capabilities.{
   VelocityDrive
 }
 
+import java.util.concurrent.Flow.Publisher
 import scala.language.implicitConversions
 import scala.math.Numeric.*
 
@@ -138,6 +141,10 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
           table.getDoubleTopic("Gyro angle (deg)").publish()
         val rate: DoublePublisher =
           table.getDoubleTopic("Gyro rate (deg/s)").publish()
+
+      val pose: StructPublisher[Pose2d] = networkTables.table
+        .getStructTopic[Pose2d]("Pose", Pose2dStruct())
+        .publish()
     end publishers
   end networkTables
 
@@ -215,21 +222,21 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
     for {
       leftEncoder <- config.drive.left.encoder
       rightEncoder <- config.drive.right.encoder
-      leftDistancePerUnit <- leftEncoder.distancePerUnit
-      rightDistancePerUnit <- rightEncoder.distancePerUnit
+      leftDistancePerRevolution <- leftEncoder.distancePerRevolution
+      rightDistancePerRevolution <- rightEncoder.distancePerRevolution
     } yield new EncoderDistance {
       override def left: Quantity[Double, Meter] =
         drive.left.primary
           .getEncoder()
           .getPosition
-          .withUnit[1] * leftDistancePerUnit
+          .withUnit[1] * leftDistancePerRevolution
       end left
 
       override def right: Quantity[Double, Meter] =
         drive.right.primary
           .getEncoder()
           .getPosition
-          .withUnit[1] * rightDistancePerUnit
+          .withUnit[1] * rightDistancePerRevolution
       end right
     }
   end encoderDistance
@@ -295,6 +302,7 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
         networkTables.publishers.motors.leftOutput.set(leftOut)
         networkTables.publishers.motors.rightOutput.set(rightOut)
     }
+  end velocityDrive
 
   val gyro: Option[Gyro] = pigeon.map(pigeon =>
     new Gyro {
@@ -381,6 +389,7 @@ class Drivetrain(config: Config, networkTable: NetworkTable)
         gyro.rate.toUnit[Degree / Second].value
       )
     )
+    pose.map(pose => networkTables.publishers.pose.set(pose.pose))
   end logPeriodic
 
 end Drivetrain

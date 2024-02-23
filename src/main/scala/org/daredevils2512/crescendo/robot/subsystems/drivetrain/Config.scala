@@ -22,7 +22,7 @@ object Config:
     )
     object Group:
       case class Primary(id: Int, inverted: Boolean)
-      case class Encoder(distancePerUnit: Option[Quantity[Double, Meter]])
+      case class Encoder(distancePerRevolution: Option[Quantity[Double, Meter]])
     end Group
   end Drive
 
