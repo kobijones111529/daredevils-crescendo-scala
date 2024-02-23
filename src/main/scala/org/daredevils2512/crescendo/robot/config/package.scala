@@ -1,6 +1,7 @@
 package org.daredevils2512.crescendo.robot
 
 import org.daredevils2512.crescendo.robot.subsystems.arm.Config as ArmConfig
+import org.daredevils2512.crescendo.robot.subsystems.climber.Config as ClimberConfig
 import org.daredevils2512.crescendo.robot.subsystems.drivetrain.Config as DrivetrainConfig
 import org.daredevils2512.crescendo.robot.subsystems.extake.Config as ExtakeConfig
 import org.daredevils2512.crescendo.robot.subsystems.intake.Config as IntakeConfig
@@ -9,6 +10,7 @@ package object config:
   object control:
     val intakeSpeed: Double = 0.8
     val extakeSpeed: Double = 1.0
+    val climberSpeed: Double = 1.0
   end control
 
   object controllers:
@@ -64,5 +66,16 @@ package object config:
     motorGroup = ExtakeConfig.MotorGroup(
       primary = ExtakeConfig.MotorGroup.Primary(can.extake.primary),
       inverted = true
+    )
+  )
+
+  val climber: ClimberConfig = ClimberConfig(
+    left = ClimberConfig.MotorGroup(
+      primary = ClimberConfig.MotorGroup.Primary(can.climber.left.primary),
+      inverted = false
+    ),
+    right = ClimberConfig.MotorGroup(
+      primary = ClimberConfig.MotorGroup.Primary(can.climber.right.primary),
+      inverted = false
     )
   )
