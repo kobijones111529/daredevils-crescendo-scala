@@ -15,13 +15,14 @@ package object config:
 
   object controllers:
     val xbox: Int = 0
+    val extreme: Int = 1
   end controllers
 
   val drivetrain: DrivetrainConfig = DrivetrainConfig(
     drive = DrivetrainConfig.Drive(
       left = DrivetrainConfig.Drive.Group(
         primary = DrivetrainConfig.Drive.Group
-          .Primary(can.drivetrain.left.primary, false),
+          .Primary(id = can.drivetrain.left.primary, inverted = false),
         backups = can.drivetrain.left.backups,
         rateLimit = Some(3),
         feedforward = None,
@@ -33,7 +34,7 @@ package object config:
       ),
       right = DrivetrainConfig.Drive.Group(
         primary = DrivetrainConfig.Drive.Group
-          .Primary(can.drivetrain.right.primary, true),
+          .Primary(id = can.drivetrain.right.primary, inverted = true),
         backups = can.drivetrain.right.backups,
         rateLimit = Some(3),
         feedforward = None,
@@ -58,7 +59,7 @@ package object config:
   val arm: ArmConfig = ArmConfig(
     motorGroup = ArmConfig.MotorGroup(
       primary = can.arm.primary,
-      inverted = false
+      inverted = true
     )
   )
 

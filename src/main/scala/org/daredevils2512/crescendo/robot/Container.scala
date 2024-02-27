@@ -16,6 +16,7 @@ import edu.wpi.first.networktables.{
 }
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
+import org.daredevils2512.crescendo.robot.joysticks.CommandExtreme
 import org.daredevils2512.crescendo.robot.subsystems.arm.Arm
 import org.daredevils2512.crescendo.robot.subsystems.climber.Climber
 import org.daredevils2512.crescendo.robot.subsystems.drivetrain.Drivetrain
@@ -32,24 +33,30 @@ class Container:
   val xbox: CommandXboxController = CommandXboxController(
     config.controllers.xbox
   )
+  val extreme: CommandExtreme = CommandExtreme(
+    config.controllers.extreme
+  )
 
   val drivetrain: Option[Drivetrain] =
     None
-    Some(
-      Drivetrain(
-        config.drivetrain,
-        networkTables.table.getSubTable("Drivetrain")
-      )
-    )
+    // Some(
+    //   Drivetrain(
+    //     config.drivetrain,
+    //     networkTables.table.getSubTable("Drivetrain")
+    //   )
+    // )
   val intake: Option[Intake] =
-    Some(
-      Intake(config.intake)
-    )
+    None
+    // Some(
+    //   Intake(config.intake)
+    // )
   val arm: Option[Arm] =
-    Some(
-      Arm(config.arm)
-    )
+    None
+    // Some(
+    //   Arm(config.arm)
+    // )
   val extake: Option[Extake] =
+    // None
     Some(
       Extake(
         config.extake,
@@ -57,12 +64,13 @@ class Container:
       )
     )
   val climber: Option[Climber] =
-    Some(
-      Climber(
-        config.climber,
-        networkTables.table.getSubTable("Climber")
-      )
-    )
+    None
+    // Some(
+    //   Climber(
+    //     config.climber,
+    //     networkTables.table.getSubTable("Climber")
+    //   )
+    // )
 
   def periodic(): Unit = ()
 
@@ -122,13 +130,14 @@ class Container:
 
     for {
       extake <- extake
+      feed <- extake.simpleFeed
     } yield
       xbox
         .a()
         .whileTrue(
           commands.extake.run(
             extake = extake,
-            simpleFeed = extake.simpleFeed,
+            simpleFeed = feed,
             speed = config.control.extakeSpeed
           )
         )
@@ -137,7 +146,7 @@ class Container:
         .whileTrue(
           commands.extake.run(
             extake = extake,
-            simpleFeed = extake.simpleFeed,
+            simpleFeed = feed,
             speed = -config.control.extakeSpeed
           )
         )
@@ -146,6 +155,7 @@ class Container:
     for {
       intake <- intake
       extake <- extake
+      feed <- extake.simpleFeed
     } yield xbox
       .rightTrigger()
       .whileTrue(
@@ -158,7 +168,7 @@ class Container:
           .alongWith(
             commands.extake.run(
               extake = extake,
-              simpleFeed = extake.simpleFeed,
+              simpleFeed = feed,
               speed = config.control.extakeSpeed
             )
           )
@@ -167,16 +177,66 @@ class Container:
 
     for {
       climber <- climber
-    } yield xbox
-      .x()
-      .whileTrue(
-        commands.climber.runClimber(
-          climber = climber,
-          simpleClimber = climber.simpleClimber,
-          speed = config.control.climberSpeed
-        )
+    } yield
+    // xbox
+    //   .x()
+    //   .whileTrue(
+    //     commands.climber.runClimber(
+    //       climber = climber,
+    //       simpleClimber = climber.simpleClimber,
+    //       speed = config.control.climberSpeed
+    //     )
+    //   )
+    climber.setDefaultCommand(
+      commands.climber.runClimber(
+        climber = climber,
+        simpleClimber = climber.simpleClimber,
+        leftSpeed =
+          if extreme.baseFrontLeft.getAsBoolean() then
+            config.control.climberSpeed
+          else 0,
+        rightSpeed =
+          if extreme.baseFrontRight.getAsBoolean() then
+            config.control.climberSpeed
+          else 0
       )
+    )
     end for
   end configureBindings
 
-  def auto: Option[Command] = None
+  def auto: Option[Command] =
+    for {
+      drivetrain <- drivetrain
+      simpleDrive <- drivetrain.simpleDrive
+      arm <- arm
+      extake <- extake
+      feed <- extake.simpleFeed
+    } yield
+      val driveToPosition =
+        (
+          commands.drive
+            .arcade(drivetrain, simpleDrive, 0.4, -0.4)
+            .withTimeout(2)
+          )
+          .andThen(
+            commands.drive
+              .arcade(drivetrain, simpleDrive, -0.2, 0)
+              .withTimeout(0.5)
+          )
+      val armToPosition = commands.arm
+        .run(arm, arm.simpleActuate, 0.8)
+        .withTimeout(2)
+      val depositNote =
+        commands.extake
+          .run(extake, feed, 1)
+          .withTimeout(1)
+      val leave =
+        commands.drive
+          .arcade(drivetrain, simpleDrive, -0.4, 0.4)
+          .withTimeout(2)
+      driveToPosition
+        .alongWith(armToPosition)
+        .andThen(depositNote)
+        .andThen(leave)
+    end for
+  end auto
