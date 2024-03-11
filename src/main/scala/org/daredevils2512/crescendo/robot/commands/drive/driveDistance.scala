@@ -17,6 +17,18 @@ import org.daredevils2512.util.uom.abs
 
 import scala.language.implicitConversions
 
+def driveTime(
+    drivetrain: Drivetrain,
+    simpleDrive: SimpleDrive,
+    move: => Double,
+    turn: => Double,
+    time: Double
+): Command =
+  drivetrain
+    .run(() => simpleDrive.arcade(move, turn))
+    .finallyDo(() => simpleDrive.stop())
+    .withTimeout(time)
+
 def driveDistance(
     drivetrain: Drivetrain,
     simpleDrive: SimpleDrive,

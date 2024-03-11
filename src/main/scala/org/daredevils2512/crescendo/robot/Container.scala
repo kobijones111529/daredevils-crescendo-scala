@@ -14,8 +14,8 @@ import edu.wpi.first.networktables.{
   NetworkTableInstance,
   Topic
 }
-import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
+import edu.wpi.first.wpilibj2.command.{Command, RunCommand}
 import org.daredevils2512.crescendo.robot.subsystems.arm.Arm
 import org.daredevils2512.crescendo.robot.subsystems.climber.Climber
 import org.daredevils2512.crescendo.robot.subsystems.drivetrain.Drivetrain
@@ -189,4 +189,16 @@ class Container:
     end for
   end configureBindings
 
-  def auto: Option[Command] = None
+  def auto: Option[Command] =
+    for {
+      drivetrain <- drivetrain
+      simpleDrive <- drivetrain.simpleDrive
+    } yield commands.drive
+      .driveTime(drivetrain, simpleDrive, 1, 0, 1)
+      .andThen(commands.drive.driveTime(drivetrain, simpleDrive, 0, 1, 1))
+      .alongWith(
+        new RunCommand(() => println("Doing a thing"))
+          .finallyDo(() => println("Done"))
+          .withTimeout(5)
+      )
+    end for
