@@ -59,6 +59,10 @@ package object config:
     motorGroup = ArmConfig.MotorGroup(
       primary = can.arm.primary,
       inverted = false
+    ),
+    limitSwitches = ArmConfig.LimitSwitches(
+      bottom = dio.arm.bottomLimitSwitch,
+      top = dio.arm.topLimitSwitch
     )
   )
 
