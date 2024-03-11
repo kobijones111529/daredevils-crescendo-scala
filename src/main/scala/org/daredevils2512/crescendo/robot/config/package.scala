@@ -69,12 +69,15 @@ package object config:
     )
   )
 
-  val climber: ClimberConfig = ClimberConfig(
-    left = ClimberConfig.MotorGroup(
+  val climberLeft: ClimberConfig = ClimberConfig(
+    motorGroup = ClimberConfig.MotorGroup(
       primary = ClimberConfig.MotorGroup.Primary(can.climber.left.primary),
       inverted = false
-    ),
-    right = ClimberConfig.MotorGroup(
+    )
+  )
+
+  val climberRight: ClimberConfig = ClimberConfig(
+    motorGroup = ClimberConfig.MotorGroup(
       primary = ClimberConfig.MotorGroup.Primary(can.climber.right.primary),
       inverted = false
     )

@@ -56,11 +56,18 @@ class Container:
         networkTables.table.getSubTable("Extake")
       )
     )
-  val climber: Option[Climber] =
+  val climberLeft: Option[Climber] =
     Some(
       Climber(
-        config.climber,
-        networkTables.table.getSubTable("Climber")
+        config.climberLeft,
+        networkTables.table.getSubTable("Climber left")
+      )
+    )
+  val climberRight: Option[Climber] =
+    Some(
+      Climber(
+        config.climberRight,
+        networkTables.table.getSubTable("Climber right")
       )
     )
 
@@ -166,13 +173,16 @@ class Container:
     end for
 
     for {
-      climber <- climber
+      climberLeft <- climberLeft
+      climberRight <- climberRight
     } yield xbox
       .x()
       .whileTrue(
         commands.climber.runClimber(
-          climber = climber,
-          simpleClimber = climber.simpleClimber,
+          left = climberLeft,
+          right = climberRight,
+          simpleClimberLeft = climberLeft.simpleClimber,
+          simpleClimberRight = climberRight.simpleClimber,
           speed = config.control.climberSpeed
         )
       )

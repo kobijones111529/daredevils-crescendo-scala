@@ -6,23 +6,34 @@ import org.daredevils2512.crescendo.robot.subsystems.climber.capabilities.Simple
 
 package object climber:
   def runClimber(
-      climber: Climber,
-      simpleClimber: SimpleClimber,
+      left: Climber,
+      right: Climber,
+      simpleClimberLeft: SimpleClimber,
+      simpleClimberRight: SimpleClimber,
       leftSpeed: => Double,
       rightSpeed: => Double
   ): Command =
-    climber
-      .run(() => simpleClimber.run(leftSpeed, rightSpeed))
-      .finallyDo(() => simpleClimber.stop())
+    val runLeft = left
+      .run(() => simpleClimberLeft.run(leftSpeed))
+      .finallyDo(() => simpleClimberLeft.stop())
+    val runRight = right
+      .run(() => simpleClimberRight.run(rightSpeed))
+      .finallyDo(() => simpleClimberRight.stop())
+
+    runLeft.alongWith(runRight)
   end runClimber
 
   def runClimber(
-      climber: Climber,
-      simpleClimber: SimpleClimber,
+      left: Climber,
+      right: Climber,
+      simpleClimberLeft: SimpleClimber,
+      simpleClimberRight: SimpleClimber,
       speed: => Double
   ): Command = runClimber(
-    climber = climber,
-    simpleClimber = simpleClimber,
+    left = left,
+    right = right,
+    simpleClimberLeft = simpleClimberLeft,
+    simpleClimberRight = simpleClimberRight,
     leftSpeed = speed,
     rightSpeed = speed
   )

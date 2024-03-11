@@ -9,16 +9,10 @@ import org.daredevils2512.crescendo.robot.subsystems.climber.capabilities.Simple
 class Climber(config: Config, networkTable: NetworkTable) extends SubsystemBase:
   object networkTables:
     object motors:
-      object left:
-        val appliedOutput =
-          networkTable.getDoubleTopic("Applied output (left)").publish()
-        val statorCurrent =
-          networkTable.getDoubleTopic("Stator current (left)").publish()
-      object right:
-        val appliedOutput =
-          networkTable.getDoubleTopic("Applied output (right)").publish()
-        val statorCurrent =
-          networkTable.getDoubleTopic("Stator current (right)").publish()
+      val appliedOutput =
+        networkTable.getDoubleTopic("Applied output (left)").publish()
+      val statorCurrent =
+        networkTable.getDoubleTopic("Stator current (left)").publish()
   end networkTables
 
   case class MotorGroup(primary: TalonSRX)
@@ -35,36 +29,24 @@ class Climber(config: Config, networkTable: NetworkTable) extends SubsystemBase:
       MotorGroup(primary)
     end apply
 
-  object drive:
-    val left: MotorGroup = MotorGroup(config.left)
-    val right: MotorGroup = MotorGroup(config.right)
+  val motorGroup: MotorGroup = MotorGroup(config.motorGroup)
 
   val simpleClimber: SimpleClimber =
     new SimpleClimber {
       override def stop(): Unit =
-        drive.left.primary.set(ControlMode.Disabled, 0)
-        drive.right.primary.set(ControlMode.Disabled, 0)
+        motorGroup.primary.set(ControlMode.Disabled, 0)
       end stop
 
-      override def run(left: Double, right: Double): Unit =
-        drive.left.primary.set(ControlMode.PercentOutput, left)
-        drive.right.primary.set(ControlMode.PercentOutput, right)
+      override def run(speed: Double): Unit =
+        motorGroup.primary.set(ControlMode.PercentOutput, speed)
       end run
     }
   end simpleClimber
 
   override def periodic(): Unit =
     locally {
-      val motor = drive.left.primary
-      val group = networkTables.motors.left
-      group.appliedOutput.set(motor.getMotorOutputPercent())
-      group.statorCurrent.set(motor.getStatorCurrent())
-    }
-
-    locally {
-      val motor = drive.right.primary
-      val group = networkTables.motors.right
-      group.appliedOutput.set(motor.getMotorOutputPercent())
-      group.statorCurrent.set(motor.getStatorCurrent())
+      val motor = motorGroup.primary
+      networkTables.motors.appliedOutput.set(motor.getMotorOutputPercent())
+      networkTables.motors.statorCurrent.set(motor.getStatorCurrent())
     }
   end periodic
