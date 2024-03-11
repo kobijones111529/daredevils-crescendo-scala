@@ -58,7 +58,8 @@ package object config:
   val arm: ArmConfig = ArmConfig(
     motorGroup = ArmConfig.MotorGroup(
       primary = can.arm.primary,
-      inverted = false
+      inverted = false,
+      rateLimit = Some(3)
     ),
     limitSwitches = ArmConfig.LimitSwitches(
       bottom = dio.arm.bottomLimitSwitch,

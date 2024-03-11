@@ -2,6 +2,7 @@ package org.daredevils2512.crescendo.robot.subsystems.arm
 
 import com.ctre.phoenix.motorcontrol.NeutralMode
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX
+import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.wpilibj.DigitalInput
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import org.daredevils2512.crescendo.robot.subsystems.arm.capabilities.{
@@ -12,7 +13,10 @@ import org.daredevils2512.crescendo.robot.subsystems.arm.capabilities.{
 import scala.math.*
 
 class Arm(config: Config) extends SubsystemBase:
-  case class MotorGroup(primary: WPI_TalonSRX)
+  case class MotorGroup(
+      primary: WPI_TalonSRX,
+      rateLimit: Option[SlewRateLimiter]
+  )
   object MotorGroup:
     def apply(config: Config.MotorGroup): MotorGroup =
       val primary = WPI_TalonSRX(config.primary)
@@ -21,7 +25,9 @@ class Arm(config: Config) extends SubsystemBase:
       primary.setInverted(config.inverted)
       primary.setNeutralMode(NeutralMode.Coast)
 
-      MotorGroup(primary)
+      val rateLimit = config.rateLimit.map(SlewRateLimiter(_))
+
+      MotorGroup(primary, rateLimit)
     end apply
 
   private val motorGroup: MotorGroup = MotorGroup(config.motorGroup)
@@ -63,10 +69,14 @@ class Arm(config: Config) extends SubsystemBase:
 
   private def applyOutput(speed: Double): Unit =
     var speed = output()
+
     for { bottom <- limitSwitches.bottom } yield
       if bottom.get() then speed = max(0, speed)
-    end for
     for { top <- limitSwitches.top } yield
       if top.get() then speed = min(speed, 0)
-    end for
+
+    for { rateLimit <- motorGroup.rateLimit } yield speed =
+      rateLimit.calculate(speed)
+
     motorGroup.primary.set(speed)
+  end applyOutput
