@@ -5,5 +5,9 @@ case class Config(
     limitSwitches: Config.LimitSwitches
 )
 object Config:
-  case class MotorGroup(primary: Int, inverted: Boolean)
+  case class MotorGroup(
+      primary: Int,
+      inverted: Boolean,
+      rateLimit: Option[Double]
+  )
   case class LimitSwitches(bottom: Option[Int], top: Option[Int])
