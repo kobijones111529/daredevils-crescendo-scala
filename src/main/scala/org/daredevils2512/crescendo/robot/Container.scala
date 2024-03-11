@@ -17,6 +17,7 @@ import edu.wpi.first.networktables.{
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.{Command, RunCommand}
 import org.daredevils2512.crescendo.robot.subsystems.arm.Arm
+import org.daredevils2512.crescendo.robot.subsystems.climber.Climber
 import org.daredevils2512.crescendo.robot.subsystems.drivetrain.Drivetrain
 import org.daredevils2512.crescendo.robot.subsystems.extake.Extake
 import org.daredevils2512.crescendo.robot.subsystems.intake.Intake
@@ -33,7 +34,7 @@ class Container:
   )
 
   val drivetrain: Option[Drivetrain] =
-    // None
+    None
     Some(
       Drivetrain(
         config.drivetrain,
@@ -53,6 +54,20 @@ class Container:
       Extake(
         config.extake,
         networkTables.table.getSubTable("Extake")
+      )
+    )
+  val climberLeft: Option[Climber] =
+    Some(
+      Climber(
+        config.climberLeft,
+        networkTables.table.getSubTable("Climber left")
+      )
+    )
+  val climberRight: Option[Climber] =
+    Some(
+      Climber(
+        config.climberRight,
+        networkTables.table.getSubTable("Climber right")
       )
     )
 
@@ -85,7 +100,7 @@ class Container:
         tolerance = Some(10.withUnit[Meter / 100]),
         maxOutput = 0.5
       )
-      xbox.b().onTrue(command)
+      // TODO: Bind command
     end for
 
     for {
@@ -154,6 +169,22 @@ class Container:
               speed = config.control.extakeSpeed
             )
           )
+      )
+    end for
+
+    for {
+      climberLeft <- climberLeft
+      climberRight <- climberRight
+    } yield xbox
+      .x()
+      .whileTrue(
+        commands.climber.runClimber(
+          left = climberLeft,
+          right = climberRight,
+          simpleClimberLeft = climberLeft.simpleClimber,
+          simpleClimberRight = climberRight.simpleClimber,
+          speed = config.control.climberSpeed
+        )
       )
     end for
   end configureBindings

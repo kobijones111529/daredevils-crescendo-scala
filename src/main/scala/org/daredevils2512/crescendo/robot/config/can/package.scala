@@ -15,3 +15,8 @@ package object can:
     val primary: Int = 7
   object extake:
     val primary: Int = 6
+  object climber:
+    object left:
+      val primary: Int = 8
+    object right:
+      val primary: Int = 9
